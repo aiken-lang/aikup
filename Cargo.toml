@@ -1,0 +1,14 @@
+[package]
+name = "aikup"
+version = "0.0.1"
+description = "Manage multiple versions of aiken"
+edition = "2021"
+repository = "https://github.com/aiken-lang/aiken"
+homepage = "https://github.com/aiken-lang/aiken"
+license = "Apache-2.0"
+authors = ["Lucas Rosa <x@rvcas.dev>"]
+
+[dependencies]
+clap = { version = "4.1.6", features = ["derive"] }
+miette = { version = "5.5.0", features = ["fancy"] }
+thiserror = "1.0.38"
