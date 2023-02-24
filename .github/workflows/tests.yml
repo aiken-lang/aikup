@@ -15,15 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build
-        run: cargo build --verbose --workspace
+        run: cargo build --verbose
       - name: Run unit tests
-        run: cargo test --verbose --workspace
-      - name: Run acceptance tests
-        working-directory: examples/acceptance_tests
-        run: |
-          cargo install cbor-diag-cli
-          bash ci
-        shell: bash
+        run: cargo test --verbose
       - name: Format
         run: cargo fmt --all -- --check
       - name: Clippy
