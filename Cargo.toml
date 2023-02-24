@@ -3,8 +3,8 @@ name = "aikup"
 version = "0.0.1"
 description = "Manage multiple versions of aiken"
 edition = "2021"
-repository = "https://github.com/aiken-lang/aiken"
-homepage = "https://github.com/aiken-lang/aiken"
+repository = "https://github.com/aiken-lang/aikup"
+homepage = "https://aiken-lang.org"
 license = "Apache-2.0"
 authors = ["Lucas Rosa <x@rvcas.dev>"]
 
