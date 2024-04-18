@@ -76,7 +76,7 @@ pub async fn exec(args: Args) -> miette::Result<()> {
             println!("aikup: aiken installed");
         }
         None => {
-            eprintln!("aikup: no release found for your platform");
+            eprintln!("aikup: no release found for {}", asset_name);
 
             std::process::exit(1);
         }
