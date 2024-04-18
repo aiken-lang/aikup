@@ -1,5 +1,9 @@
+use std::env;
+
+use flate2::read::GzDecoder;
 use http_body_util::BodyExt;
 use miette::IntoDiagnostic;
+use tar::Archive;
 
 use crate::BANNER;
 
@@ -42,10 +46,12 @@ pub async fn exec(args: Args) -> miette::Result<()> {
 
     println!("aikup: installing aiken ({})", release.tag_name);
 
+    let asset_name = asset_name(&release.tag_name);
+
     let asset = release
         .assets
         .into_iter()
-        .find(|asset| asset.name == "aiken_v1.0.26-alpha_darwin_amd64.tar.gz");
+        .find(|asset| asset.name == asset_name);
 
     match asset {
         Some(asset) => {
@@ -61,7 +67,11 @@ pub async fn exec(args: Args) -> miette::Result<()> {
                 .into_diagnostic()?
                 .to_bytes();
 
-            println!("{:#?}", bytes);
+            let decoder = GzDecoder::new(&bytes[..]);
+
+            let mut archive = Archive::new(decoder);
+
+            archive.unpack(".").into_diagnostic()?;
 
             println!("aikup: aiken installed");
         }
@@ -73,4 +83,21 @@ pub async fn exec(args: Args) -> miette::Result<()> {
     }
 
     Ok(())
+}
+
+fn asset_name(tag_name: &str) -> String {
+    let os = match env::consts::OS {
+        "macos" => "darwin",
+        "windows" => "win32",
+        os => os,
+    };
+
+    let arch = match env::consts::ARCH {
+        "x86" => "amd64",
+        "x86_64" => "amd64",
+        "aarch64" => "arm64",
+        arch => arch,
+    };
+
+    format!("aiken_{}_{}_{}.tar.gz", tag_name, os, arch)
 }
