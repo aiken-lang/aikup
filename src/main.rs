@@ -1,18 +1,6 @@
-use clap::Parser;
+#[tokio::main]
+async fn main() -> miette::Result<()> {
+    let cli = aikup::Cli::default();
 
-mod cmd;
-
-/// aikup
-#[derive(Parser)]
-#[clap(version, about, long_about = None)]
-#[clap(propagate_version = true)]
-// #[clap(setting(clap::AppSettings::DeriveDisplayOrder))]
-enum Cmd {
-    Install(cmd::install::Args),
-}
-
-fn main() -> miette::Result<()> {
-    match Cmd::parse() {
-        Cmd::Install(args) => cmd::install::exec(args),
-    }
+    cli.exec().await
 }
