@@ -10,6 +10,8 @@ authors = ["Lucas Rosa <x@rvcas.dev>"]
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
+http-body-util = "0.1.1"
+indoc = "2.0.5"
 miette = { version = "7.2.0", features = ["fancy"] }
 octocrab = "0.38.0"
 thiserror = "1.0.58"

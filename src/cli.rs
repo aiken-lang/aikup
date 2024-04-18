@@ -1,11 +1,9 @@
 use crate::cmd;
 use clap::Parser;
 
-/// aikup
 #[derive(Parser)]
 #[clap(version, about, long_about = None)]
 #[clap(propagate_version = true)]
-// #[clap(setting(clap::AppSettings::DeriveDisplayOrder))]
 pub struct Cli {
     #[command(subcommand)]
     pub cmd: Option<cmd::Cmd>,
