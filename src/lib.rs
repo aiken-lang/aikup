@@ -4,8 +4,8 @@ mod cmd;
 pub use cli::Cli;
 use indoc::indoc;
 
-pub const BANNER: &str = indoc! {r#"
-    ================================================================================
+pub const BANNER: &str = indoc! {
+r#"================================================================================
 
     ░█▀▀▄░▀█▀░▒█░▄▀░▒█▀▀▀░▒█▄░▒█             Modern and modular toolkit
     ▒█▄▄█░▒█░░▒█▀▄░░▒█▀▀▀░▒█▒█▒█       for Cardano Smart Contract development.
@@ -18,5 +18,5 @@ pub const BANNER: &str = indoc! {r#"
     Chat       : https://discord.gg/Vc3x8N9nz2
     Contribute : https://github.com/aiken-lang/aiken/blob/main/CONTRIBUTING.md
 
-    ================================================================================
-"#};
+    ================================================================================"#
+};
