@@ -2,7 +2,12 @@
 
 A CLI for managing multiple versions of Aiken.
 
-## Features
+## Usage
+
+```sh
+# install the latest version of Aiken
+aikup install
+```
 
 ## Why?
 
