@@ -21,7 +21,7 @@ impl Colors {
             warning_text: Style::new().yellow(),
             success_text: Style::new().green(),
             info_text: Style::new().blue(),
-            label: Style::new().magenta(),
+            label: Style::new().magenta().bold(),
         }
     }
 
