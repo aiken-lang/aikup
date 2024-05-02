@@ -17,3 +17,11 @@ pub async fn remove_file_if_exists(path: &PathBuf) -> miette::Result<()> {
 
     Ok(())
 }
+
+pub fn root_dir() -> miette::Result<PathBuf> {
+    let Some(aiken_root) = dirs::home_dir().map(|home| home.join(".aiken")) else {
+        miette::bail!("cannot find home directory")
+    };
+
+    Ok(aiken_root)
+}

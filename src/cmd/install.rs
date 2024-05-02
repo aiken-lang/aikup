@@ -12,7 +12,7 @@ use miette::IntoDiagnostic;
 use tar::Archive;
 
 use crate::{
-    utils::{create_dir_all_if_not_exists, remove_file_if_exists},
+    utils::{create_dir_all_if_not_exists, remove_file_if_exists, root_dir},
     BANNER,
 };
 
@@ -40,9 +40,7 @@ pub async fn exec(args: Args) -> miette::Result<()> {
 
     let octocrab = octocrab::instance();
 
-    let Some(aiken_root) = dirs::home_dir().map(|home| home.join(".aiken")) else {
-        miette::bail!("cannot find home directory")
-    };
+    let aiken_root = root_dir()?;
 
     let bin_dir = aiken_root.join("bin");
     let versions_dir = aiken_root.join("versions");
