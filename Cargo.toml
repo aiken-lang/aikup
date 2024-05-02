@@ -16,6 +16,7 @@ eula = false
 
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
+dirs = "5.0.1"
 flate2 = "1.0.28"
 http-body-util = "0.1.1"
 indoc = "2.0.5"

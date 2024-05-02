@@ -1,5 +1,6 @@
 mod cli;
 mod cmd;
+mod utils;
 
 pub use cli::Cli;
 use indoc::indoc;
