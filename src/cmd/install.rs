@@ -116,7 +116,7 @@ pub async fn exec(args: Args) -> miette::Result<()> {
         let sym_bin = bin_dir.join("aiken");
         let src_bin = install_dir.join("aiken");
 
-        match sym_bin.read_link() {
+        match tokio::fs::read_link(&sym_bin).await {
             Ok(real_path) if real_path == src_bin => {
                 println!("aikup: already switched to aiken ({})", &release.tag_name);
 
