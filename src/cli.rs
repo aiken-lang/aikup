@@ -1,4 +1,5 @@
 use crate::cmd;
+
 use clap::Parser;
 
 #[derive(Parser)]
@@ -25,5 +26,5 @@ impl Cli {
 }
 
 async fn install_latest() -> miette::Result<()> {
-    cmd::install::exec(cmd::install::Args::latest()).await
+    cmd::install::Args::latest().exec().await
 }

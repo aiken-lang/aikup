@@ -10,39 +10,53 @@ pub struct Args {
     installed: bool,
 }
 
-pub async fn exec(args: Args) -> miette::Result<()> {
-    if args.installed {
-        let aiken_root = root_dir()?;
-        let versions_dir = aiken_root.join("versions");
+impl Args {
+    pub async fn exec(self) -> miette::Result<()> {
+        let ctx = crate::ctx::instance();
 
-        let mut entries = tokio::fs::read_dir(&versions_dir).await.into_diagnostic()?;
+        if self.installed {
+            let aiken_root = root_dir()?;
+            let versions_dir = aiken_root.join("versions");
 
-        println!("aikup: installed versions");
+            let mut entries = tokio::fs::read_dir(&versions_dir).await.into_diagnostic()?;
 
-        while let Some(entry) = entries.next_entry().await.into_diagnostic()? {
-            let path = entry.path();
+            println!(
+                "{} {}\n",
+                ctx.aikup_label(),
+                ctx.colors.info_text("installed versions")
+            );
 
-            if path.is_dir() {
-                println!("{}", path.file_name().unwrap().to_string_lossy());
+            while let Some(entry) = entries.next_entry().await.into_diagnostic()? {
+                let path = entry.path();
+
+                if path.is_dir() {
+                    let display_name = path.file_name().unwrap().to_string_lossy();
+
+                    println!("{}", ctx.colors.version_text(display_name).bold());
+                }
+            }
+        } else {
+            let octocrab = octocrab::instance();
+
+            let releases = octocrab
+                .repos("aiken-lang", "aiken")
+                .releases()
+                .list()
+                .send()
+                .await
+                .into_diagnostic()?;
+
+            println!(
+                "{} {}\n",
+                ctx.aikup_label(),
+                ctx.colors.info_text("available versions")
+            );
+
+            for release in releases {
+                println!("{}", ctx.colors.version_text(&release.tag_name).bold());
             }
         }
-    } else {
-        let octocrab = octocrab::instance();
 
-        let releases = octocrab
-            .repos("aiken-lang", "aiken")
-            .releases()
-            .list()
-            .send()
-            .await
-            .into_diagnostic()?;
-
-        println!("aikup: available versions");
-
-        for release in releases {
-            println!("{}", release.tag_name);
-        }
+        Ok(())
     }
-
-    Ok(())
 }

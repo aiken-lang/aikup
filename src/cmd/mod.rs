@@ -10,8 +10,8 @@ pub enum Cmd {
 impl Cmd {
     pub async fn exec(self) -> miette::Result<()> {
         match self {
-            Cmd::Install(args) => install::exec(args).await,
-            Cmd::List(args) => list::exec(args).await,
+            Cmd::Install(args) => args.exec().await,
+            Cmd::List(args) => args.exec().await,
         }
     }
 }

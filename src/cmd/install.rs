@@ -33,106 +33,140 @@ impl Args {
             no_switch: false,
         }
     }
-}
 
-pub async fn exec(args: Args) -> miette::Result<()> {
-    println!("{}", BANNER);
+    pub async fn exec(self) -> miette::Result<()> {
+        println!("{}", BANNER);
 
-    let octocrab = octocrab::instance();
+        let ctx = crate::ctx::instance();
+        let octocrab = octocrab::instance();
 
-    let aiken_root = root_dir()?;
+        let aiken_root = root_dir()?;
 
-    let bin_dir = aiken_root.join("bin");
-    let versions_dir = aiken_root.join("versions");
+        let bin_dir = aiken_root.join("bin");
+        let versions_dir = aiken_root.join("versions");
 
-    let release = match args.release {
-        Some(tag) => {
-            println!("aikup: installing aiken ({})", tag);
+        let release = match self.release {
+            Some(tag) => {
+                println!(
+                    "{} {} {}",
+                    ctx.aikup_label(),
+                    ctx.colors.info_text("installing"),
+                    ctx.colors.version_text(&tag).italic().dim()
+                );
 
-            octocrab
-                .repos("aiken-lang", "aiken")
-                .releases()
-                .get_by_tag(&tag)
-                .await
-                .into_diagnostic()?
-        }
-        None => {
-            println!("aikup: no version specified; installing latest");
+                octocrab
+                    .repos("aiken-lang", "aiken")
+                    .releases()
+                    .get_by_tag(&tag)
+                    .await
+                    .into_diagnostic()?
+            }
+            None => {
+                println!(
+                    "{} {} {}",
+                    ctx.aikup_label(),
+                    ctx.colors.warning_text("no version specified;"),
+                    ctx.colors.info_text("installing latest"),
+                );
 
-            octocrab
-                .repos("aiken-lang", "aiken")
-                .releases()
-                .get_latest()
-                .await
-                .into_diagnostic()?
-        }
-    };
+                octocrab
+                    .repos("aiken-lang", "aiken")
+                    .releases()
+                    .get_latest()
+                    .await
+                    .into_diagnostic()?
+            }
+        };
 
-    let asset_name = asset_name(&release.tag_name);
+        let asset_name = asset_name(&release.tag_name);
 
-    let search_result = release
-        .assets
-        .into_iter()
-        .find(|asset| asset.name == asset_name);
+        let search_result = release
+            .assets
+            .into_iter()
+            .find(|asset| asset.name == asset_name);
 
-    let Some(asset) = search_result else {
-        miette::bail!("aikup: no release found for {}", asset_name);
-    };
-
-    let install_dir = versions_dir.join(&release.tag_name);
-    let src_bin = install_dir.join("aiken");
-
-    if src_bin.try_exists().into_diagnostic()? {
-        println!("aikup: already installed aiken ({})", &release.tag_name);
-    } else {
-        println!("aikup: downloading aiken ({})", &release.tag_name);
-
-        let bytes = octocrab
-            ._get(asset.browser_download_url.to_string())
-            .await
-            .into_diagnostic()?
-            .into_body()
-            .collect()
-            .await
-            .into_diagnostic()?
-            .to_bytes();
-
-        let decoder = GzDecoder::new(&bytes[..]);
-
-        let mut archive = Archive::new(decoder);
+        let Some(asset) = search_result else {
+            miette::bail!("{} no release found for {}", ctx.aikup_label(), asset_name);
+        };
 
         let install_dir = versions_dir.join(&release.tag_name);
-
-        create_dir_all_if_not_exists(&versions_dir).await?;
-
-        archive.unpack(&install_dir).into_diagnostic()?;
-
-        println!("aikup: installed aiken ({})", &release.tag_name);
-    }
-
-    if !args.no_switch {
-        let sym_bin = bin_dir.join("aiken");
         let src_bin = install_dir.join("aiken");
 
-        match tokio::fs::read_link(&sym_bin).await {
-            Ok(real_path) if real_path == src_bin => {
-                println!("aikup: already switched to aiken ({})", &release.tag_name);
+        if src_bin.try_exists().into_diagnostic()? {
+            println!(
+                "{} {} {}",
+                ctx.aikup_label(),
+                ctx.colors.warning_text("already installed"),
+                ctx.colors.version_text(&release.tag_name).italic().dim()
+            );
+        } else {
+            println!(
+                "{} {} {}",
+                ctx.aikup_label(),
+                ctx.colors.info_text("downloading"),
+                ctx.colors.version_text(&release.tag_name).italic().dim()
+            );
 
-                return Ok(());
-            }
-            Ok(_) | Err(_) => {
-                create_dir_all_if_not_exists(&bin_dir).await?;
+            let bytes = octocrab
+                ._get(asset.browser_download_url.to_string())
+                .await
+                .into_diagnostic()?
+                .into_body()
+                .collect()
+                .await
+                .into_diagnostic()?
+                .to_bytes();
 
-                remove_file_if_exists(&sym_bin).await?;
+            let decoder = GzDecoder::new(&bytes[..]);
 
-                symlink(src_bin, sym_bin).await.into_diagnostic()?;
+            let mut archive = Archive::new(decoder);
 
-                println!("aikup: switched to aiken ({})", &release.tag_name);
+            let install_dir = versions_dir.join(&release.tag_name);
+
+            create_dir_all_if_not_exists(&versions_dir).await?;
+
+            archive.unpack(&install_dir).into_diagnostic()?;
+
+            println!(
+                "{} {} {}",
+                ctx.aikup_label(),
+                ctx.colors.success_text("installed"),
+                ctx.colors.version_text(&release.tag_name).italic().dim()
+            );
+        }
+
+        if !self.no_switch {
+            let sym_bin = bin_dir.join("aiken");
+            let src_bin = install_dir.join("aiken");
+
+            match tokio::fs::read_link(&sym_bin).await {
+                Ok(real_path) if real_path == src_bin => {
+                    println!(
+                        "{} {} {}",
+                        ctx.aikup_label(),
+                        ctx.colors.warning_text("already switched"),
+                        ctx.colors.version_text(&release.tag_name).italic().dim()
+                    );
+                }
+                Ok(_) | Err(_) => {
+                    create_dir_all_if_not_exists(&bin_dir).await?;
+
+                    remove_file_if_exists(&sym_bin).await?;
+
+                    symlink(src_bin, sym_bin).await.into_diagnostic()?;
+
+                    println!(
+                        "{} {} {}",
+                        ctx.aikup_label(),
+                        ctx.colors.success_text("switched"),
+                        ctx.colors.version_text(&release.tag_name).italic().dim()
+                    );
+                }
             }
         }
-    }
 
-    Ok(())
+        Ok(())
+    }
 }
 
 fn asset_name(tag_name: &str) -> String {
