@@ -30,7 +30,7 @@ impl Args {
     pub fn latest() -> Self {
         Self {
             release: None,
-            no_switch: true,
+            no_switch: false,
         }
     }
 }
@@ -116,13 +116,22 @@ pub async fn exec(args: Args) -> miette::Result<()> {
         let sym_bin = bin_dir.join("aiken");
         let src_bin = install_dir.join("aiken");
 
-        create_dir_all_if_not_exists(&bin_dir).await?;
+        match sym_bin.read_link() {
+            Ok(real_path) if real_path == src_bin => {
+                println!("aikup: already switched to aiken ({})", &release.tag_name);
 
-        remove_file_if_exists(&sym_bin).await?;
+                return Ok(());
+            }
+            Ok(_) | Err(_) => {
+                create_dir_all_if_not_exists(&bin_dir).await?;
 
-        symlink(src_bin, sym_bin).await.into_diagnostic()?;
+                remove_file_if_exists(&sym_bin).await?;
 
-        println!("aikup: switched to aiken ({})", &release.tag_name);
+                symlink(src_bin, sym_bin).await.into_diagnostic()?;
+
+                println!("aikup: switched to aiken ({})", &release.tag_name);
+            }
+        }
     }
 
     Ok(())
