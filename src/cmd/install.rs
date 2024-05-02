@@ -21,7 +21,7 @@ use crate::{
 pub struct Args {
     /// Version to install
     release: Option<String>,
-    /// Whether or not to switch to the installed version
+    /// Do not switch to the installed version
     #[clap(short, long, default_value = "false")]
     no_switch: bool,
 }
