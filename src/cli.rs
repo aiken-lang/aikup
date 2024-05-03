@@ -1,9 +1,9 @@
-use crate::cmd;
+use crate::{cmd, BANNER};
 
 use clap::Parser;
 
 #[derive(Parser)]
-#[clap(version, about, long_about = None)]
+#[clap(version, about, long_about = Some(BANNER))]
 #[clap(propagate_version = true)]
 pub struct Cli {
     #[command(subcommand)]
@@ -20,11 +20,11 @@ impl Cli {
     pub async fn exec(self) -> miette::Result<()> {
         match self.cmd {
             Some(cmd) => cmd.exec().await,
-            None => install_latest().await,
+            None => {
+                println!("\n {}\n", BANNER.trim_start());
+
+                cmd::install::latest().await
+            }
         }
     }
-}
-
-async fn install_latest() -> miette::Result<()> {
-    cmd::install::Args::latest().exec().await
 }

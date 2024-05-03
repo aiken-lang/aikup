@@ -35,9 +35,7 @@ impl Args {
     }
 
     pub async fn exec(self) -> miette::Result<()> {
-        println!("{}", BANNER);
-
-        let ctx = crate::ctx::instance();
+        let ctx = ctx::instance();
         let octocrab = octocrab::instance();
 
         let aiken_root = root_dir()?;
@@ -167,6 +165,10 @@ impl Args {
 
         Ok(())
     }
+}
+
+pub async fn latest() -> miette::Result<()> {
+    Args::latest().exec().await
 }
 
 fn asset_name(tag_name: &str) -> String {

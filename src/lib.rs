@@ -5,21 +5,16 @@ mod ctx;
 mod utils;
 
 pub use cli::Cli;
-use indoc::indoc;
 
-pub const BANNER: &str = indoc! {
-r#"================================================================================
+pub const BANNER: &str = color_print::cstr! {
+r#"
 
-    ░█▀▀▄░▀█▀░▒█░▄▀░▒█▀▀▀░▒█▄░▒█             Modern and modular toolkit
-    ▒█▄▄█░▒█░░▒█▀▄░░▒█▀▀▀░▒█▒█▒█       for Cardano Smart Contract development.
-    ▒█░▒█░▄█▄░▒█░▒█░▒█▄▄▄░▒█░░▀█                 Written in Rust.
+ ░█▀▀▄░▀█▀░▒█░▄▀░▒█▀▀▀░▒█▄░▒█             Modern and modular toolkit
+ ▒█▄▄█░▒█░░▒█▀▄░░▒█▀▀▀░▒█▒█▒█       for <green><bold>Cardano</bold></green> Smart Contract development.
+ ▒█░▒█░▄█▄░▒█░▒█░▒█▄▄▄░▒█░░▀█                  Written in Rust.
 
-    ================================================================================
-
-    Repo       : https://github.com/aiken-lang/aiken
-    Docs       : https://aiken-lang.org/
-    Chat       : https://discord.gg/Vc3x8N9nz2
-    Contribute : https://github.com/aiken-lang/aiken/blob/main/CONTRIBUTING.md
-
-    ================================================================================"#
+ <magenta>repo:</magenta> <blue><italic><dim>https://github.com/aiken-lang/aiken</dim></italic></blue>
+ <magenta>docs:</magenta> <blue><italic><dim>https://aiken-lang.org</dim></italic></blue>
+ <magenta>chat:</magenta> <blue><italic><dim>https://discord.gg/Vc3x8N9nz2</dim></italic></blue>
+ <magenta>contribute:</magenta> <blue><italic><dim>https://github.com/aiken-lang/aiken/blob/main/CONTRIBUTING.md</dim></italic></blue>"#
 };

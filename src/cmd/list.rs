@@ -1,6 +1,6 @@
 use miette::IntoDiagnostic;
 
-use crate::utils::root_dir;
+use crate::{ctx, utils::root_dir};
 
 /// List available aiken versions
 #[derive(clap::Args)]
@@ -12,7 +12,7 @@ pub struct Args {
 
 impl Args {
     pub async fn exec(self) -> miette::Result<()> {
-        let ctx = crate::ctx::instance();
+        let ctx = ctx::instance();
 
         if self.installed {
             let aiken_root = root_dir()?;
