@@ -12,16 +12,16 @@ use miette::IntoDiagnostic;
 use tar::Archive;
 
 use crate::{
+    ctx,
     utils::{create_dir_all_if_not_exists, remove_file_if_exists, root_dir},
-    BANNER,
 };
 
 /// Install aiken versions
 #[derive(clap::Args)]
 pub struct Args {
-    /// Version to install
+    /// version to install
     release: Option<String>,
-    /// Do not switch to the installed version
+    /// do not switch to the installed version
     #[clap(short, long, default_value = "false")]
     no_switch: bool,
 }
