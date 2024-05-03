@@ -2,6 +2,7 @@ use console::{Style, StyledObject};
 
 pub struct Colors {
     version_text: Style,
+    error_text: Style,
     warning_text: Style,
     success_text: Style,
     info_text: Style,
@@ -18,6 +19,7 @@ impl Colors {
     pub fn new() -> Self {
         Self {
             version_text: Style::new().cyan(),
+            error_text: Style::new().red(),
             warning_text: Style::new().yellow(),
             success_text: Style::new().green(),
             info_text: Style::new().blue(),
@@ -27,6 +29,10 @@ impl Colors {
 
     pub fn version_text<D>(&self, val: D) -> StyledObject<D> {
         self.version_text.apply_to(val)
+    }
+
+    pub fn error_text<D>(&self, val: D) -> StyledObject<D> {
+        self.error_text.apply_to(val)
     }
 
     pub fn warning_text<D>(&self, val: D) -> StyledObject<D> {
