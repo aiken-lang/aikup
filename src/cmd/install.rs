@@ -9,6 +9,7 @@ use tokio::fs::symlink_file as symlink;
 use flate2::read::GzDecoder;
 use http_body_util::BodyExt;
 use miette::IntoDiagnostic;
+use semver::Version;
 use tar::Archive;
 
 use crate::{
@@ -76,7 +77,7 @@ impl Args {
             }
         };
 
-        let asset_name = asset_name(&release.tag_name);
+        let asset_name = asset_name(&release.tag_name)?;
 
         let search_result = release
             .assets
@@ -171,19 +172,43 @@ pub async fn latest() -> miette::Result<()> {
     Args::latest().exec().await
 }
 
-fn asset_name(tag_name: &str) -> String {
-    let os = match env::consts::OS {
-        "macos" => "darwin",
-        "windows" => "win32",
-        os => os,
-    };
+fn asset_name(tag_name: &str) -> miette::Result<String> {
+    let version = Version::parse(&tag_name.replace('v', "")).into_diagnostic()?;
 
-    let arch = match env::consts::ARCH {
-        "x86" => "amd64",
-        "x86_64" => "amd64",
-        "aarch64" => "arm64",
-        arch => arch,
-    };
+    let cut_off = Version::parse("1.0.26-alpha").into_diagnostic()?;
 
-    format!("aiken_{}_{}_{}.tar.gz", tag_name, os, arch)
+    if version > cut_off {
+        let os = match env::consts::OS {
+            "macos" => "apple-darwin",
+            "windows" => "pc-windows-msvc",
+            "linux" => "unknown-linux-gnu",
+            os => os,
+        };
+
+        let arch = match env::consts::ARCH {
+            "x86" => "x86_64",
+            arch => arch,
+        };
+
+        let asset_name = format!("aiken-{}-{}.tar.gz", arch, os);
+
+        Ok(asset_name)
+    } else {
+        let os = match env::consts::OS {
+            "macos" => "darwin",
+            "windows" => "win32",
+            os => os,
+        };
+
+        let arch = match env::consts::ARCH {
+            "x86" => "amd64",
+            "x86_64" => "amd64",
+            "aarch64" => "arm64",
+            arch => arch,
+        };
+
+        let asset_name = format!("aiken_{}_{}_{}.tar.gz", tag_name, os, arch);
+
+        Ok(asset_name)
+    }
 }
