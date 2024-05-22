@@ -14,6 +14,7 @@ use tar::Archive;
 
 use crate::{
     ctx,
+    partial_config::PartialConfig,
     utils::{create_dir_all_if_not_exists, remove_file_if_exists, root_dir},
 };
 
@@ -61,19 +62,41 @@ impl Args {
                     .into_diagnostic()?
             }
             None => {
-                println!(
-                    "{} {} {}",
-                    ctx.aikup_label(),
-                    ctx.colors.warning_text("no version specified;"),
-                    ctx.colors.info_text("installing latest"),
-                );
+                let current_dir = env::current_dir().into_diagnostic()?;
 
-                octocrab
-                    .repos("aiken-lang", "aiken")
-                    .releases()
-                    .get_latest()
-                    .await
-                    .into_diagnostic()?
+                let opt_config = PartialConfig::load(&current_dir).await.ok();
+
+                if let Some(config) = opt_config {
+                    let version = format!("v{}", &config.compiler);
+
+                    println!(
+                        "{} {} {}",
+                        ctx.aikup_label(),
+                        ctx.colors.info_text("detected"),
+                        ctx.colors.version_text(&version).italic().dim()
+                    );
+
+                    octocrab
+                        .repos("aiken-lang", "aiken")
+                        .releases()
+                        .get_by_tag(&version)
+                        .await
+                        .into_diagnostic()?
+                } else {
+                    println!(
+                        "{} {} {}",
+                        ctx.aikup_label(),
+                        ctx.colors.warning_text("no version specified;"),
+                        ctx.colors.info_text("installing latest"),
+                    );
+
+                    octocrab
+                        .repos("aiken-lang", "aiken")
+                        .releases()
+                        .get_latest()
+                        .await
+                        .into_diagnostic()?
+                }
             }
         };
 

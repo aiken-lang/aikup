@@ -2,6 +2,7 @@ mod cli;
 mod cmd;
 mod colors;
 mod ctx;
+mod partial_config;
 mod utils;
 
 pub use cli::Cli;
