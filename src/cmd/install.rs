@@ -100,7 +100,13 @@ impl Args {
             }
         };
 
-        let asset_name = asset_name(&release.tag_name)?;
+        let version = Version::parse(&release.tag_name.replace('v', "")).into_diagnostic()?;
+
+        let cut_off = Version::parse("1.0.26-alpha").into_diagnostic()?;
+
+        let is_past_cut_off = version > cut_off;
+
+        let asset_name = asset_name(&release.tag_name, is_past_cut_off)?;
 
         let search_result = release
             .assets
@@ -159,7 +165,13 @@ impl Args {
 
         if !self.no_switch {
             let sym_bin = bin_dir.join("aiken");
-            let src_bin = install_dir.join("aiken");
+            let src_bin = if is_past_cut_off {
+                install_dir
+                    .join(asset_name.replace(".tar.gz", ""))
+                    .join("aiken")
+            } else {
+                install_dir.join("aiken")
+            };
 
             match tokio::fs::read_link(&sym_bin).await {
                 Ok(real_path) if real_path == src_bin => {
@@ -195,12 +207,8 @@ pub async fn latest() -> miette::Result<()> {
     Args::latest().exec().await
 }
 
-fn asset_name(tag_name: &str) -> miette::Result<String> {
-    let version = Version::parse(&tag_name.replace('v', "")).into_diagnostic()?;
-
-    let cut_off = Version::parse("1.0.26-alpha").into_diagnostic()?;
-
-    if version > cut_off {
+fn asset_name(tag_name: &str, is_past_cut_off: bool) -> miette::Result<String> {
+    if is_past_cut_off {
         let os = match env::consts::OS {
             "macos" => "apple-darwin",
             "windows" => "pc-windows-msvc",
