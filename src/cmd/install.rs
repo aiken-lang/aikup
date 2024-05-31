@@ -164,7 +164,12 @@ impl Args {
         }
 
         if !self.no_switch {
+            #[cfg(unix)]
             let sym_bin = bin_dir.join("aiken");
+
+            #[cfg(windows)]
+            let sym_bin = bin_dir.join("aiken.bat");
+
             let src_bin = if is_past_cut_off {
                 install_dir
                     .join(asset_name.replace(".tar.gz", ""))
