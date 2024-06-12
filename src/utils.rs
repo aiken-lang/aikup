@@ -29,10 +29,18 @@ pub fn root_dir() -> miette::Result<PathBuf> {
 pub async fn read_parent_name_from_link(path: &PathBuf) -> Option<(PathBuf, String)> {
     tokio::fs::read_link(&path).await.ok().and_then(|link| {
         link.parent().and_then(|parent| {
-            parent
-                .file_name()
-                .and_then(|l| l.to_str())
-                .map(|l| (link.clone(), l.to_string()))
+            parent.file_name().and_then(|l| l.to_str()).and_then(|l| {
+                if l.contains('v') {
+                    Some((link.clone(), l.to_string()))
+                } else {
+                    parent.parent().and_then(|parent| {
+                        parent
+                            .file_name()
+                            .and_then(|l| l.to_str())
+                            .map(|l| (link.clone(), l.to_string()))
+                    })
+                }
+            })
         })
     })
 }

@@ -11,12 +11,22 @@ impl Args {
     pub async fn exec(self) -> miette::Result<()> {
         let ctx = ctx::instance();
 
-        let sym_bin = root_dir()?.join("bin").join("aiken");
+        let bin_dir = root_dir()?.join("bin");
 
+        #[cfg(unix)]
+        let sym_bin = bin_dir.join("aiken");
+
+        #[cfg(unix)]
         let current_version = read_parent_name_from_link(&sym_bin).await;
 
+        #[cfg(windows)]
+        let current_version = tokio::fs::read_to_string(bin_dir.join("current"))
+            .await
+            .ok()
+            .map(|v| (bin_dir.join("current"), v));
+
         match current_version {
-            Some((path, current_version)) if path.exists() => {
+            Some((path, current_version)) if path.exists() && !current_version.is_empty() => {
                 println!(
                     "{} {} {}",
                     ctx.aikup_label(),

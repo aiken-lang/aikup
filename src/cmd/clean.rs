@@ -21,7 +21,11 @@ impl Args {
         let versions_dir = aiken_root.join("versions");
 
         let bin_dir = aiken_root.join("bin");
+        #[cfg(unix)]
         let sym_bin = bin_dir.join("aiken");
+
+        #[cfg(windows)]
+        let sym_bin = bin_dir.join("aiken.exe");
 
         let mut entries = tokio::fs::read_dir(&versions_dir).await.into_diagnostic()?;
 
@@ -31,12 +35,23 @@ impl Args {
             ctx.colors.info_text("removing versions")
         );
 
+        #[cfg(unix)]
         let (_, current_version) = read_parent_name_from_link(&sym_bin)
+            .await
+            .unwrap_or_default();
+
+        #[cfg(windows)]
+        let current_version = tokio::fs::read_to_string(bin_dir.join("current"))
             .await
             .unwrap_or_default();
 
         if !self.keep_current {
             remove_file_if_exists(&sym_bin).await?;
+
+            #[cfg(windows)]
+            tokio::fs::remove_file(bin_dir.join("current"))
+                .await
+                .into_diagnostic()?;
         }
 
         while let Some(entry) = entries.next_entry().await.into_diagnostic()? {
@@ -48,7 +63,7 @@ impl Args {
                 .map(|l| l.to_string())
                 .unwrap_or_default();
 
-            let keep_entry = self.keep_current && display_name == current_version;
+            let keep_entry = self.keep_current && display_name.contains(&current_version);
 
             if !keep_entry && path.is_dir() {
                 tokio::fs::remove_dir_all(&path).await.into_diagnostic()?;

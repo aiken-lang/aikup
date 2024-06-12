@@ -1,11 +1,5 @@
 use std::env;
 
-#[cfg(unix)]
-use tokio::fs::symlink;
-
-#[cfg(windows)]
-use tokio::fs::symlink_file as symlink;
-
 use flate2::read::GzDecoder;
 use http_body_util::BodyExt;
 use miette::IntoDiagnostic;
@@ -165,34 +159,97 @@ impl Args {
 
         if !self.no_switch {
             #[cfg(unix)]
-            let sym_bin = bin_dir.join("aiken");
+            {
+                let sym_bin = bin_dir.join("aiken");
+
+                let src_bin = if is_past_cut_off {
+                    install_dir
+                        .join(asset_name.replace(".tar.gz", ""))
+                        .join("aiken")
+                } else {
+                    install_dir.join("aiken")
+                };
+
+                match tokio::fs::read_link(&sym_bin).await {
+                    Ok(real_path) if real_path == src_bin => {
+                        println!(
+                            "{} {} {}",
+                            ctx.aikup_label(),
+                            ctx.colors.warning_text("already switched"),
+                            ctx.colors.version_text(&release.tag_name).italic().dim()
+                        );
+                    }
+                    Ok(_) | Err(_) => {
+                        create_dir_all_if_not_exists(&bin_dir).await?;
+
+                        remove_file_if_exists(&sym_bin).await?;
+
+                        tokio::fs::symlink(src_bin, sym_bin)
+                            .await
+                            .into_diagnostic()?;
+
+                        println!(
+                            "{} {} {}",
+                            ctx.aikup_label(),
+                            ctx.colors.success_text("switched"),
+                            ctx.colors.version_text(&release.tag_name).italic().dim()
+                        );
+                    }
+                }
+            }
 
             #[cfg(windows)]
-            let sym_bin = bin_dir.join("aiken.bat");
+            {
+                let sym_bin = bin_dir.join("aiken.exe");
 
-            let src_bin = if is_past_cut_off {
-                install_dir
-                    .join(asset_name.replace(".tar.gz", ""))
-                    .join("aiken")
-            } else {
-                install_dir.join("aiken")
-            };
+                let current = bin_dir.join("current");
 
-            match tokio::fs::read_link(&sym_bin).await {
-                Ok(real_path) if real_path == src_bin => {
-                    println!(
-                        "{} {} {}",
-                        ctx.aikup_label(),
-                        ctx.colors.warning_text("already switched"),
-                        ctx.colors.version_text(&release.tag_name).italic().dim()
-                    );
-                }
-                Ok(_) | Err(_) => {
+                let src_bin = if is_past_cut_off {
+                    install_dir
+                        .join(asset_name.replace(".tar.gz", ""))
+                        .join("aiken.exe")
+                } else {
+                    install_dir.join("aiken.exe")
+                };
+
+                if tokio::fs::try_exists(&current).await.into_diagnostic()? {
+                    let current_version = tokio::fs::read_to_string(&current)
+                        .await
+                        .into_diagnostic()?;
+
+                    if current_version.trim() == release.tag_name {
+                        println!(
+                            "{} {} {}",
+                            ctx.aikup_label(),
+                            ctx.colors.warning_text("already switched"),
+                            ctx.colors.version_text(&release.tag_name).italic().dim()
+                        );
+                    } else {
+                        remove_file_if_exists(&sym_bin).await?;
+
+                        tokio::fs::copy(src_bin, sym_bin).await.into_diagnostic()?;
+
+                        tokio::fs::write(current, &release.tag_name)
+                            .await
+                            .into_diagnostic()?;
+
+                        println!(
+                            "{} {} {}",
+                            ctx.aikup_label(),
+                            ctx.colors.success_text("switched"),
+                            ctx.colors.version_text(&release.tag_name).italic().dim()
+                        );
+                    }
+                } else {
                     create_dir_all_if_not_exists(&bin_dir).await?;
 
                     remove_file_if_exists(&sym_bin).await?;
 
-                    symlink(src_bin, sym_bin).await.into_diagnostic()?;
+                    tokio::fs::copy(src_bin, sym_bin).await.into_diagnostic()?;
+
+                    tokio::fs::write(current, &release.tag_name)
+                        .await
+                        .into_diagnostic()?;
 
                     println!(
                         "{} {} {}",
