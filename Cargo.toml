@@ -1,6 +1,6 @@
 [package]
 name = "aikup"
-version = "0.0.9"
+version = "0.0.10"
 description = "Manage multiple versions of aiken"
 edition = "2021"
 repository = "https://github.com/aiken-lang/aikup"
