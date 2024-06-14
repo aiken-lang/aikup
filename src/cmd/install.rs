@@ -5,6 +5,7 @@ use http_body_util::BodyExt;
 use miette::IntoDiagnostic;
 use semver::Version;
 use tar::Archive;
+use which::which;
 
 use crate::{
     ctx,
@@ -258,6 +259,28 @@ impl Args {
                         ctx.colors.version_text(&release.tag_name).italic().dim()
                     );
                 }
+            }
+        }
+
+        match which("aiken") {
+            Ok(path) if path.display().to_string().contains(".aiken/bin") => (),
+            Ok(_) => {
+                println!(
+                    "{} {}",
+                    ctx.aikup_label(),
+                    ctx.colors
+                        .warning_text("aiken is in your PATH but not managed by this tool")
+                );
+            }
+            Err(_) => {
+                println!(
+                    "{} {}",
+                    ctx.aikup_label(),
+                    ctx.colors.warning_text(format!(
+                        "aiken not found in your $PATH, please add \"{}\" to your $PATH",
+                        bin_dir.display()
+                    ))
+                );
             }
         }
 
