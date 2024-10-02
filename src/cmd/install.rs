@@ -97,11 +97,16 @@ impl Args {
 
         let version = Version::parse(&release.tag_name.replace('v', "")).into_diagnostic()?;
 
-        let cut_off = Version::parse("1.0.26-alpha").into_diagnostic()?;
+        let use_cargo_dist_artifact_names =
+            version > Version::parse("1.0.26-alpha").into_diagnostic()?;
 
-        let is_past_cut_off = version > cut_off;
+        let use_musl_target = version > Version::parse("1.1.3").into_diagnostic()?;
 
-        let asset_name = asset_name(&release.tag_name, is_past_cut_off)?;
+        let asset_name = asset_name(
+            &release.tag_name,
+            use_cargo_dist_artifact_names,
+            use_musl_target,
+        )?;
 
         let search_result = release
             .assets
@@ -163,7 +168,7 @@ impl Args {
             {
                 let sym_bin = bin_dir.join("aiken");
 
-                let src_bin = if is_past_cut_off {
+                let src_bin = if use_cargo_dist_artifact_names {
                     install_dir
                         .join(asset_name.replace(".tar.gz", ""))
                         .join("aiken")
@@ -292,11 +297,16 @@ pub async fn latest() -> miette::Result<()> {
     Args::latest().exec().await
 }
 
-fn asset_name(tag_name: &str, is_past_cut_off: bool) -> miette::Result<String> {
-    if is_past_cut_off {
+fn asset_name(
+    tag_name: &str,
+    use_cargo_dist_artifact_names: bool,
+    use_musl_target: bool,
+) -> miette::Result<String> {
+    if use_cargo_dist_artifact_names {
         let os = match env::consts::OS {
             "macos" => "apple-darwin",
             "windows" => "pc-windows-msvc",
+            "linux" if use_musl_target => "unknown-linux-musl",
             "linux" => "unknown-linux-gnu",
             os => os,
         };
