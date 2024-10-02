@@ -210,7 +210,7 @@ impl Args {
 
                 let current = bin_dir.join("current");
 
-                let src_bin = if is_past_cut_off {
+                let src_bin = if use_cargo_dist_artifact_names {
                     install_dir
                         .join(asset_name.replace(".tar.gz", ""))
                         .join("aiken.exe")
